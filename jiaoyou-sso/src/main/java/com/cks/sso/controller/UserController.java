@@ -35,6 +35,7 @@ public class UserController {
     public ResponseEntity<Object> login(@RequestBody  Map<String,String> param){
         try {
             String phone = param.get("phone");
+            //验证码
             String code = param.get("verificationCode");
 
             String data = this.userService.login(phone, code);
@@ -46,6 +47,7 @@ public class UserController {
                 String[] ss = StringUtils.split(data, '|');
 
                 result.put("token", ss[0]);
+                //"true" 为string，true为boolean类型，下面转换成boolean
                 result.put("isNew", Boolean.valueOf(ss[1]));
                 return ResponseEntity.ok(result);
             }

@@ -75,9 +75,9 @@ public class UserService {
             //注册新用户
             this.userMapper.insert(user);
             isNew = true;
+            log.info("新增新用户：[{}]", JSON.toJSONString(user));
         }
-        log.info("新增用户：[{}]", JSON.toJSONString(user));
-        //生成token
+        //配置生成token参数
         Map<String, Object> claims = new HashMap<String, Object>();
         claims.put("id", user.getId());
 
@@ -89,14 +89,15 @@ public class UserService {
                 .compact();
 
         try {
-            //发送用户登录成功的消息
+            //rocketMQ发送用户登录成功的消息
             Map<String,Object> msg = new HashMap<>();
             msg.put("id", user.getId());
             msg.put("date", System.currentTimeMillis());
-
+            //msg转换成json并发送
             this.rocketMQTemplate.convertAndSend("tanhua-sso-login", msg);
+            log.info("mq消息发送成功:[]",msg);
         } catch (MessagingException e) {
-            log.error("发送消息失败！", e);
+            log.error("MQ发送消息失败！", e);
         }
 
         return token + "|" + isNew;

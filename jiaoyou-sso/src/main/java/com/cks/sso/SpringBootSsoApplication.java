@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-@EnableConfigurationProperties(AliyunSMSConfig.class)
+//@EnableConfigurationProperties(AliyunSMSConfig.class)
 @MapperScan("com.cks.sso.mapper") //设置mapper接口的扫描包
 @SpringBootApplication
 public class SpringBootSsoApplication {
