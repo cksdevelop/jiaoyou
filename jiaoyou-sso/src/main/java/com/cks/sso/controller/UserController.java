@@ -1,7 +1,10 @@
 package com.cks.sso.controller;
 
+import com.cks.sso.pojo.User;
+import com.cks.sso.service.UserInfoService;
 import com.cks.sso.service.UserService;
 import com.cks.sso.vo.ErrorResult;
+import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,29 +62,14 @@ public class UserController {
     }
 
     /**
-     * 完善个人信息
-//     * @param gender 性别 man or woman
-//     * @param nickname 昵称
-//     * @param birthday 出生日期
-//     * @param city 城市
-//     * @param header 用户头像
-     * @return: org.springframework.http.ResponseEntity<java.lang.Object>
+     * 校验token，根据token查询用户数据
+     * SSO系统提供了对外开放的接口
+     * @param token
+     * @return  null：非法token|token失效 ；
+     *          User user对象
      */
-    @PostMapping("loginReginfo")
-    public ResponseEntity<Object> loginRegInfo(@RequestBody Map<String,String> param,
-                                               @RequestHeader("Authorization") String token){
-
-        log.info("接收数据：[{}],token：[{}]",param,token);
-        return null;
+    @GetMapping("{token}")
+    public User queryUserByToken(@PathVariable("token") String token) {
+        return this.userService.queryUserByToken(token);
     }
-
-
-    @PostMapping("loginReginfo/head")
-    public ResponseEntity<Object> saveUserLogo(@RequestBody MultipartFile file,
-                                               @RequestHeader("Authorization") String token){
-        log.info("：[{}]：[{}]",file,token);
-
-        return null;
-    }
-
 }

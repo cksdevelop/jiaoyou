@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.cks.sso.mapper.UserMapper;
 import com.cks.sso.pojo.User;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -101,5 +103,45 @@ public class UserService {
         }
 
         return token + "|" + isNew;
+    }
+
+    public User queryUserByToken(String token) {
+        try {
+            // 通过token解析数据
+            Map<String, Object> body = Jwts.parser()
+                    .setSigningKey(secret)
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            User user = new User();
+            user.setId(Long.valueOf(body.get("id").toString()));
+
+            //需要返回user对象中的mobile，需要查询数据库获取到mobile数据
+            //如果每次都查询数据库，必然会导致性能问题，需要对用户的手机号进行缓存操作
+            //数据缓存时，需要设置过期时间，过期时间要与token的时间一致
+            //如果用户修改了手机号，需要同步修改redis中的数据
+
+            String redisKey = "TANHUA_USER_MOBILE_" + user.getId();
+            if(this.redisTemplate.hasKey(redisKey)){
+                String mobile = this.redisTemplate.opsForValue().get(redisKey);
+                user.setMobile(mobile);
+            }else {
+                //查询数据库
+                User u = this.userMapper.selectById(user.getId());
+                user.setMobile(u.getMobile());
+
+                //将手机号写入到redis中
+                //在jwt中的过期时间的单位为：秒
+                long timeout = Long.valueOf(body.get("exp").toString()) * 1000 - System.currentTimeMillis();
+                this.redisTemplate.opsForValue().set(redisKey, u.getMobile(), timeout, TimeUnit.MILLISECONDS);
+            }
+
+            return user;
+        } catch (ExpiredJwtException e) {
+            log.info("token已经过期！ token = " + token);
+        } catch (Exception e) {
+            log.error("token不合法！ token = "+ token, e);
+        }
+        return null;
     }
 }
